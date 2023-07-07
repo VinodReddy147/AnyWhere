@@ -1,0 +1,102 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-android'
+    id 'kotlin-android-extensions'
+    id 'kotlin-kapt'
+}
+
+android {
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.example.anywhere"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable false
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    flavorDimensions "app", "environment"
+
+    productFlavors {
+        DEV {
+            applicationId "com.sample.simpsonsviewer"
+            dimension "environment"
+            resValue "string", "app_name", "Simpsons Character Viewer"
+        }
+        PROD {
+            applicationId "com.sample.wireviewer"
+            dimension "environment"
+            resValue "string", "app_name", "The Wire Character Viewer"
+        }
+        core {
+            dimension "app"
+            ext {
+                baseurl = [PROD: "http://api.duckduckgo.com/", DEV: "http://api.duckduckgo.com/"]
+                end_point = [PROD: "?q=the+wire+characters&format=json", DEV: "?q=simpsons+characters&format=json"]
+                https_enabled = [PROD: "$httpsEnabled", UAT: "$httpsEnabled", DEV: "$httpsEnabled"]
+                versionCode = ['PROD': 001, 'UAT': 001, 'DEV': 001]
+                versionName = ['PROD': "0.0.1", 'UAT': "0.0.1", 'DEV': "0.0.1"]
+            }
+        }
+    }
+    buildFeatures {
+        viewBinding true
+    }
+    applicationVariants.all { variant ->
+        def flavors = variant.productFlavors
+        def app = flavors[0]
+        def environment = flavors[1]
+        println "Setting up server URL ${app.ext.baseurl[environment.name]} for variant [${variant.name}]"
+        variant.buildConfigField "String", "BASE_URL", "\"${app.ext.baseurl[environment.name]}\""
+        variant.buildConfigField "String", "END_POINT", "\"${app.ext.end_point[environment.name]}\""
+        variant.outputs.each { output ->
+            output.versionCodeOverride =
+                    app.ext.versionCode.get(environment.name)
+        }
+        variant.outputs.each { output ->
+            output.versionNameOverride =
+                    app.ext.versionName.get(environment.name)
+        }
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.5.0"
+}
